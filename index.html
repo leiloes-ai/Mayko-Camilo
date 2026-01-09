@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>GestorPRO</title>
+    
+    <meta name="theme-color" content="#1d4ed8" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="manifest" href="/manifest.json" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    primary: {
+                        50: 'var(--color-primary-50)',
+                        100: 'var(--color-primary-100)',
+                        200: 'var(--color-primary-200)',
+                        300: 'var(--color-primary-300)',
+                        400: 'var(--color-primary-400)',
+                        500: 'var(--color-primary-500)',
+                        600: 'var(--color-primary-600)',
+                        700: 'var(--color-primary-700)',
+                        800: 'var(--color-primary-800)',
+                        900: 'var(--color-primary-900)',
+                        950: 'var(--color-primary-950)',
+                    },
+                }
+            }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^18.2.0/",
+    "react": "https://esm.sh/react@^18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@^18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@^18.2.0",
+    "recharts": "https://esm.sh/recharts@2.12.7",
+    "xlsx": "https://esm.sh/xlsx@0.18.5",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.2"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-100 dark:bg-gray-900 overflow-hidden selection:bg-primary-100">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+    <script>
+      // Registro Inteligente do Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // 1. Verificar se estamos em localhost ou HTTPS (Contexto Seguro)
+          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const isHttps = window.location.protocol === 'https:';
+          
+          if (!isLocalhost && !isHttps) {
+            console.warn('PWA: Service Worker requer HTTPS para funcionar.');
+            return;
+          }
+
+          // 2. Tentar registrar usando um caminho absoluto baseado na ORIGEM atual
+          // Isso evita o erro de "origin mismatch" se o script for chamado via proxy
+          const swPath = new URL('./sw.js', window.location.href).pathname;
+
+          navigator.serviceWorker.register(swPath, { scope: './' })
+            .then(reg => {
+              console.log('PWA: Service Worker registrado com sucesso no Firebase Host.');
+            })
+            .catch(err => {
+              // Captura o erro de origem silenciosamente para não atrapalhar o desenvolvimento
+              if (err.name === 'SecurityError' || err.message.includes('origin')) {
+                console.info('PWA: Registro suspenso no ambiente de visualização (Sandbox). O PWA será ativado automaticamente no domínio .web.app do Firebase.');
+              } else {
+                console.error('PWA: Erro inesperado ao registrar:', err);
+              }
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

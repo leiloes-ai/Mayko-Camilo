@@ -1,0 +1,96 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to get user's data from the users collection
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper function to get user's permission for a specific module
+    function getPermission(module) {
+      return getUserData().permissions[module];
+    }
+    
+    // Helper function to check for master or admin role
+    function isMasterOrAdmin() {
+      return getUserData().roles.hasAny(['master', 'admin']);
+    }
+
+    // Helper function to check for privileged operational roles
+    function isPrivilegedOperational() {
+      return getUserData().roles.hasAny(['master', 'admin', 'supervisor']);
+    }
+    
+    // Helper function to check if the user is a master
+    function isMaster() {
+       return getUserData().roles.hasAny(['master']);
+    }
+
+    // Settings are public to read for login page, but only editable by authorized users
+    match /settings/default {
+      allow read: if true;
+      allow write: if request.auth != null && getPermission('settings') == 'edit';
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Master/Admin can list and read all user profiles
+      allow list, read: if isMasterOrAdmin();
+      // Any authenticated user can read their own profile
+      allow get: if request.auth.uid == userId;
+      // Only Master/Admin can create users
+      allow create: if isMasterOrAdmin();
+      
+      // Update permissions
+      allow update: if 
+        // A user can update their own non-critical info
+        (request.auth.uid == userId && request.resource.data.keys().hasOnly(['name', 'photoURL', 'fcmToken', 'forcePasswordChange']))
+        // Or a Master can edit anyone
+        || isMaster()
+        // Or an Admin can edit anyone who is NOT a Master
+        || (isMasterOrAdmin() && !isMaster() && !resource.data.roles.hasAny(['master']));
+        
+      // Delete permissions
+      allow delete: if 
+        // User cannot delete themselves
+        request.auth.uid != userId &&
+        // A Master can delete anyone
+        (isMaster()
+        // Or an Admin can delete anyone who is NOT a Master
+        || (isMasterOrAdmin() && !isMaster() && !resource.data.roles.hasAny(['master'])));
+    }
+
+    // Appointments Collection
+    match /appointments/{appointmentId} {
+      allow read: if getPermission('appointments') != 'hidden';
+      allow create: if getPermission('appointments') == 'edit' || getPermission('newRequests') == 'edit';
+      allow update: if getPermission('appointments') == 'edit' 
+                    || (getPermission('appointments') == 'update' && request.resource.data.keys().hasAny(['status', 'notes', 'messages']));
+      allow delete: if getPermission('appointments') == 'edit';
+    }
+
+    // Pendencies Collection
+    match /pendencies/{pendencyId} {
+      allow read: if getPermission('pendencies') != 'hidden';
+      allow create, update: if getPermission('pendencies') == 'edit' || getPermission('pendencies') == 'update';
+      allow delete: if getPermission('pendencies') == 'edit';
+    }
+    
+    // Financials, Accounts, ThirdParties - Only accessible by users with financial permissions
+    match /financials/{docId} {
+        allow read: if getPermission('financial') != 'hidden';
+        allow create, update, delete: if getPermission('financial') == 'edit';
+    }
+    match /accounts/{docId} {
+        allow read: if getPermission('financial') != 'hidden';
+        allow create, update, delete: if getPermission('financial') == 'edit';
+    }
+    match /thirdParties/{docId} {
+        allow read: if getPermission('financial') != 'hidden';
+        allow create, update, delete: if getPermission('financial') == 'edit';
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/sw.js",
+        "headers": [
+          { "key": "Content-Type", "value": "application/javascript" },
+          { "key": "Service-Worker-Allowed", "value": "/" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+          { "key": "Access-Control-Allow-Origin", "value": "*" }
+        ]
+      },
+      {
+        "source": "/manifest.json",
+        "headers": [
+          { "key": "Content-Type", "value": "application/manifest+json" },
+          { "key": "Access-Control-Allow-Origin", "value": "*" }
+        ]
+      },
+      {
+        "source": "/index.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css|woff2|woff)",
+        "headers": [
+          { "key": "Cache-Control", "value": "max-age=31536000" }
+        ]
+      }
+    ],
+    "rewrites": [
+      { "source": "/sw.js", "destination": "/sw.js" },
+      { "source": "/manifest.json", "destination": "/manifest.json" },
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}
