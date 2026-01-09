@@ -1,6 +1,6 @@
-const CACHE_NAME = 'gestorpro-cache-v1.23.5';
+const CACHE_NAME = 'gestorpro-cache-v1.23.6';
 
-console.log('SW: Inicializando versão', CACHE_NAME);
+console.log('SW: Ativo na versão', CACHE_NAME);
 
 const PRECACHE_ASSETS = [
   '/',
@@ -28,9 +28,9 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('SW: Iniciando cache de instalação...');
+      console.log('SW: Instalando cache...');
       return cache.addAll(PRECACHE_ASSETS).catch(err => {
-        console.warn('SW: Falha parcial no pre-cache', err);
+        console.warn('SW: Pre-cache incompleto', err);
       });
     })
   );
@@ -54,7 +54,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Ignorar chamadas críticas de API do Firebase
+  // Ignorar Firebase e APIs externas dinâmicas
   if (url.hostname.includes('googleapis.com') || url.hostname.includes('firebase')) {
     return;
   }
@@ -62,7 +62,7 @@ self.addEventListener('fetch', (event) => {
   const isStaticAsset = STATIC_ASSETS_EXTENSIONS.some(ext => url.pathname.endsWith(ext)) || 
                         EXTERNAL_STATIC_DOMAINS.some(domain => url.hostname.includes(domain));
 
-  // Estratégia Cache First para Assets
+  // Estratégia Cache First para Assets Estáticos
   if (isStaticAsset) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
@@ -82,7 +82,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estratégia Network First para Navegação
+  // Estratégia Network First para Navegação (Fallback SPA)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
