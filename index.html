@@ -57,32 +57,31 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
-      // Registro Inteligente do Service Worker
+      // Registro de Service Worker otimizado para Produção (Vercel/Firebase)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // 1. Verificar se estamos em localhost ou HTTPS (Contexto Seguro)
           const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-          const isHttps = window.location.protocol === 'https:';
           
-          if (!isLocalhost && !isHttps) {
-            console.warn('PWA: Service Worker requer HTTPS para funcionar.');
+          // No AI Studio (Sandbox), window.isSecureContext pode ser falso, mas na Vercel será verdadeiro.
+          if (!window.isSecureContext && !isLocalhost) {
+            console.debug('PWA: Contexto inseguro detectado, registro suspenso.');
             return;
           }
 
-          // 2. Tentar registrar usando um caminho absoluto baseado na ORIGEM atual
-          // Isso evita o erro de "origin mismatch" se o script for chamado via proxy
-          const swPath = new URL('./sw.js', window.location.href).pathname;
+          // Adicionamos um timestamp para evitar o erro 404 caso o navegador tenha cacheado uma resposta negativa
+          const swVersion = '1.23.5';
+          const swPath = `./sw.js?v=${swVersion}`;
 
-          navigator.serviceWorker.register(swPath, { scope: './' })
+          navigator.serviceWorker.register(swPath, { scope: '/' })
             .then(reg => {
-              console.log('PWA: Service Worker registrado com sucesso no Firebase Host.');
+              console.log('PWA: Service Worker ativo v' + swVersion);
             })
             .catch(err => {
-              // Captura o erro de origem silenciosamente para não atrapalhar o desenvolvimento
-              if (err.name === 'SecurityError' || err.message.includes('origin')) {
-                console.info('PWA: Registro suspenso no ambiente de visualização (Sandbox). O PWA será ativado automaticamente no domínio .web.app do Firebase.');
+              // Silencia erros de origem cruzada comuns em ambientes de visualização/preview
+              if (err.name === 'SecurityError' || (err.message && err.message.includes('origin'))) {
+                console.debug('PWA: Registro indisponível neste ambiente de preview (disparidade de origem).');
               } else {
-                console.error('PWA: Erro inesperado ao registrar:', err);
+                console.warn('PWA: Falha técnica ao registrar Service Worker:', err);
               }
             });
         });

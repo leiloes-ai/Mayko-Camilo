@@ -1,13 +1,15 @@
-const CACHE_NAME = 'gestorpro-cache-v1.23.3';
+const CACHE_NAME = 'gestorpro-cache-v1.23.5';
+
+console.log('SW: Inicializando versão', CACHE_NAME);
 
 const PRECACHE_ASSETS = [
-  './',
-  './index.html',
-  './index.css',
-  './index.tsx',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  '/',
+  '/index.html',
+  '/index.css',
+  '/index.tsx',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 const STATIC_ASSETS_EXTENSIONS = [
@@ -26,9 +28,9 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('SW: Pre-caching assets ativos...');
+      console.log('SW: Iniciando cache de instalação...');
       return cache.addAll(PRECACHE_ASSETS).catch(err => {
-        console.warn('SW: Pre-cache parcial (alguns itens falharam, mas o core está ativo)', err);
+        console.warn('SW: Falha parcial no pre-cache', err);
       });
     })
   );
@@ -40,7 +42,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('SW: Limpando cache antigo:', cacheName);
+            console.log('SW: Removendo cache obsoleto:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -52,7 +54,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Ignora chamadas de autenticação do Firebase e Firestore Realtime
+  // Ignorar chamadas críticas de API do Firebase
   if (url.hostname.includes('googleapis.com') || url.hostname.includes('firebase')) {
     return;
   }
@@ -60,7 +62,7 @@ self.addEventListener('fetch', (event) => {
   const isStaticAsset = STATIC_ASSETS_EXTENSIONS.some(ext => url.pathname.endsWith(ext)) || 
                         EXTERNAL_STATIC_DOMAINS.some(domain => url.hostname.includes(domain));
 
-  // Estratégia para Assets Estáticos: Cache First
+  // Estratégia Cache First para Assets
   if (isStaticAsset) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
@@ -80,7 +82,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estratégia para Navegação: Network First com fallback para index.html
+  // Estratégia Network First para Navegação
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
@@ -96,7 +98,7 @@ self.addEventListener('fetch', (event) => {
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
           if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
+            return caches.match('/');
           }
           return null;
         });
