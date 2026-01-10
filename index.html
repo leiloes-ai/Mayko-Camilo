@@ -57,7 +57,7 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
-      // Registro de Service Worker para PWA (Configuração v1.24.0)
+      // Registro de Service Worker para PWA (Configuração v1.25.0)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -65,21 +65,21 @@
 
           if (!isSecure && !isLocal) return;
 
-          // Usamos o caminho absoluto direto. A Vercel deve servir o arquivo físico se ele existir.
+          // Caminho direto para o Service Worker
           const swUrl = '/sw.js';
 
           console.log('PWA: Iniciando registro de Service Worker...');
 
           navigator.serviceWorker.register(swUrl, { scope: '/' })
             .then(reg => {
-              console.log('PWA: Service Worker registrado com sucesso (v1.24.0)');
+              console.log('PWA: Service Worker registrado com sucesso (v1.25.0)');
               
               reg.onupdatefound = () => {
                 const installingWorker = reg.installing;
                 if (installingWorker) {
                   installingWorker.onstatechange = () => {
                     if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      console.info('PWA: Nova versão detectada. Atualize a página.');
+                      console.info('PWA: Nova versão disponível. Atualize a página.');
                     }
                   };
                 }
@@ -89,7 +89,7 @@
               if (err.name === 'SecurityError' || (err.message && err.message.includes('origin'))) {
                 console.debug('PWA: Registro ignorado (Ambiente de visualização/Preview).');
               } else {
-                console.warn('PWA: Falha no registro:', err.message);
+                console.warn('PWA: Falha crítica no registro:', err.message);
               }
             });
         });
