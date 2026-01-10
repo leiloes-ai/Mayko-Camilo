@@ -57,36 +57,40 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
-      // Registro de Service Worker para PWA (Vercel/Firebase)
+      // Registro de Service Worker para PWA (Configuração Resiliente para Vercel)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Detecta se o ambiente é seguro para PWA
           const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
           const isSecure = location.protocol === 'https:';
 
           if (!isSecure && !isLocal) return;
 
-          // Registro usando caminho absoluto para evitar erros de escopo
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          // Versão do Service Worker para forçar atualização no servidor (Cache-Busting)
+          const swVersion = '1.23.7';
+          const swUrl = `/sw.js?v=${swVersion}`;
+
+          console.log('PWA: Tentando registro de Service Worker:', swUrl);
+
+          navigator.serviceWorker.register(swUrl, { scope: '/' })
             .then(reg => {
-              console.log('PWA: Service Worker registrado v1.23.6');
+              console.log('PWA: Service Worker registrado com sucesso na versão', swVersion);
               
-              // Força atualização se houver um novo worker esperando
               reg.onupdatefound = () => {
                 const installingWorker = reg.installing;
-                installingWorker.onstatechange = () => {
-                  if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('PWA: Nova versão disponível, recarregue a página.');
-                  }
-                };
+                if (installingWorker) {
+                  installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.info('PWA: Nova atualização disponível. Recarregue para aplicar.');
+                    }
+                  };
+                }
               };
             })
             .catch(err => {
-              // No ambiente de visualização (sandbox), o erro de origem é comum.
-              if (err.name === 'SecurityError' || err.message.includes('origin')) {
-                console.debug('PWA: Registro indisponível no ambiente de preview (disparidade de origem).');
+              if (err.name === 'SecurityError' || (err.message && err.message.includes('origin'))) {
+                console.debug('PWA: Bloqueio de origem cruzada detectado (esperado em sandboxes).');
               } else {
-                console.warn('PWA: Erro ao registrar:', err);
+                console.warn('PWA: Erro fatal no registro:', err.message);
               }
             });
         });

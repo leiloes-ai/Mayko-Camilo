@@ -1,6 +1,6 @@
-const CACHE_NAME = 'gestorpro-cache-v1.23.6';
+const CACHE_NAME = 'gestorpro-cache-v1.23.7';
 
-console.log('SW: Ativo na versão', CACHE_NAME);
+console.log('SW: Inicializando versão', CACHE_NAME);
 
 const PRECACHE_ASSETS = [
   '/',
@@ -28,9 +28,9 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('SW: Instalando cache...');
+      console.log('SW: Pre-caching core assets...');
       return cache.addAll(PRECACHE_ASSETS).catch(err => {
-        console.warn('SW: Pre-cache incompleto', err);
+        console.warn('SW: Pre-cache parcial', err);
       });
     })
   );
