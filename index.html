@@ -57,7 +57,7 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
-      // Registro de Service Worker para PWA (Configuração v1.25.0)
+      // Registro de Service Worker para PWA (Configuração v1.26.0)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -65,21 +65,22 @@
 
           if (!isSecure && !isLocal) return;
 
-          // Caminho direto para o Service Worker
-          const swUrl = '/sw.js';
+          // Versão do SW para forçar atualização no servidor e contornar erros 404 cacheados
+          const swVersion = '1.26.0';
+          const swUrl = `/sw.js?v=${swVersion}`;
 
-          console.log('PWA: Iniciando registro de Service Worker...');
+          console.log('PWA: Registrando Service Worker:', swUrl);
 
           navigator.serviceWorker.register(swUrl, { scope: '/' })
             .then(reg => {
-              console.log('PWA: Service Worker registrado com sucesso (v1.25.0)');
+              console.log('PWA: Service Worker v1.26.0 registrado com sucesso.');
               
               reg.onupdatefound = () => {
                 const installingWorker = reg.installing;
                 if (installingWorker) {
                   installingWorker.onstatechange = () => {
                     if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      console.info('PWA: Nova versão disponível. Atualize a página.');
+                      console.info('PWA: Nova atualização disponível. Recarregue a página.');
                     }
                   };
                 }
@@ -87,9 +88,9 @@
             })
             .catch(err => {
               if (err.name === 'SecurityError' || (err.message && err.message.includes('origin'))) {
-                console.debug('PWA: Registro ignorado (Ambiente de visualização/Preview).');
+                console.debug('PWA: Registro ignorado por restrições de origem (Sandbox).');
               } else {
-                console.warn('PWA: Falha crítica no registro:', err.message);
+                console.error('PWA: Erro crítico de registro:', err.message);
               }
             });
         });
