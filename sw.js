@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestorpro-cache-v1.23.7';
+const CACHE_NAME = 'gestorpro-cache-v1.24.0';
 
 console.log('SW: Inicializando versão', CACHE_NAME);
 
@@ -28,9 +28,9 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('SW: Pre-caching core assets...');
+      console.log('SW: Cache de instalação iniciado');
       return cache.addAll(PRECACHE_ASSETS).catch(err => {
-        console.warn('SW: Pre-cache parcial', err);
+        console.warn('SW: Erro parcial no pre-cache', err);
       });
     })
   );
@@ -42,7 +42,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('SW: Removendo cache obsoleto:', cacheName);
+            console.log('SW: Limpando cache antigo:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -54,7 +54,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Ignorar Firebase e APIs externas dinâmicas
+  // Ignorar requisições críticas do Firebase
   if (url.hostname.includes('googleapis.com') || url.hostname.includes('firebase')) {
     return;
   }
@@ -62,7 +62,7 @@ self.addEventListener('fetch', (event) => {
   const isStaticAsset = STATIC_ASSETS_EXTENSIONS.some(ext => url.pathname.endsWith(ext)) || 
                         EXTERNAL_STATIC_DOMAINS.some(domain => url.hostname.includes(domain));
 
-  // Estratégia Cache First para Assets Estáticos
+  // Estratégia Cache First para Recursos Estáticos
   if (isStaticAsset) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
@@ -82,7 +82,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estratégia Network First para Navegação (Fallback SPA)
+  // Estratégia Network First para Navegação e Rotas SPA
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
